@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>MarketPrice</title>
+<script language="javascript"
+	src="https://apis.skplanetx.com/tmap/js?version=1&format=javascript&appKey=d340dbbc-6a79-32ae-82a3-ed7e77330b9c"></script>
+<script type="text/javascript" src="./jquery-1.11.2.js"></script>
+<script type="text/javascript"
+	src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/jquery-ui.min.js"></script>
+
+
+<script type="text/javascript">
+	//==================** ArrayList처럼 만들기 **====================
+		
+	//생성자 함수를 이용해서 Arraylist 만들기
+	ArrayList = function arrayList(){
+	
+		this.list=[]; //데이터를 저장할 수 있는 배열을 멤버필드로 선언한다.
+		//인자로 전달되는 데이터를 저장하는 함수
+		
+		this.add = function(item){
+		//인자로 전달된 데이터를 자기 자신의 필드에 저장
+		this.list.push(item);
+		};
+		
+		//인자로 전달되는 해당 인덱스의 값을 리턴 하는 함수
+		this.get = function(index){
+		return this.list[index];
+		};
+		
+		//인자로 전달되는 해당 인덱스의 값을 삭제하는 함수
+		this.removeAll = function(){
+		this.list=[]; //빈 배열을 대입해서 삭제하는 효과를 준다
+		};
+		
+		//현재 저장된 크기를 리턴하는 메소드
+		this.size = function(){
+		return this.list.length;
+		};
+		
+		this.remove = function(index){
+		//새로운 배열을 정의
+		var newList=[];
+		//반복문을 돌면서 인자로 전달된 인덱스를 제외한 모든 요소를 새 배열에 담는다.
+		for(var i=0;i<this.list.length;i++){
+			if(i!=index){ //삭제할 인덱스가 아니라면
+				newList.push(this.list[i]);
+			};
+		};
+		//새로 만든 배열을 멤버 필드에 저장한다.
+		this.list = newList;
+		};
+	};
+	
+	//==========================================================
+		
+	//==================** 구조체처럼 만들기 **====================	
+	function MarketInfo(name, lat, lon){
+		this.name = name;
+		this.lat = lat;
+		this.lon = lon;
+	}	
+	//==========================================================	
+		
+		
+   var map = null;
+   var selectList = new ArrayList();
+   var index=0;
+   //*** map initialize
+   function initialize() {
+         map = new Tmap.Map({
+         div : "map_div",
+         width : '800px',
+         height : '500px',
+         
+      });
+      map.addControls([
+          new Tmap.Control.KeyboardDefaults(),
+      ]);
+      var lonlat = new Tmap.LonLat(127.079268, 37.541001);
+      var pr_3857 = new Tmap.Projection("EPSG:3857");      
+      var pr_4326 = new Tmap.Projection("EPSG:4326");      
+      lonlat.transform(pr_4326, pr_3857)  
+      
+      map.setCenter(lonlat, 14);
+   }
+   
+   //*** Add marker
+   function addMarker(name, lon, lat, markIcon){
+      var lonlat = new Tmap.LonLat(lon, lat);
+      
+      var markerLayer = new Tmap.Layer.Markers();
+      map.addLayer(markerLayer);
+      var pr_3857 = new Tmap.Projection("EPSG:3857");      // Tmap의 기본 좌표계 엉엉 ㅠㅠ
+      var pr_4326 = new Tmap.Projection("EPSG:4326");      // 요즘 많이 사용하는 WGS84좌표계
+      
+      
+      var size = new Tmap.Size(24,38);
+      var offset = new Tmap.Pixel(-(size.w/2), -(size.h/2));
+      var icon = null;
+      if(markIcon == 1)
+         icon = new Tmap.Icon('https://developers.skplanetx.com/upload/tmap/marker/pin_b_m_b.png', size, offset); 
+      else if(markIcon == 2)
+         icon = new Tmap.Icon('https://developers.skplanetx.com/upload/tmap/marker/pin_r_m_a.png', size, offset); 
+      lonlat.transform(pr_4326, pr_3857)         // 좌표계 변환해주는 것 엉엉
+      
+      var marker = new Tmap.Marker(lonlat, icon);
+      markerLayer.addMarker(marker);
+      
+      var popup;
+      popup = new Tmap.Popup(name,
+                              lonlat,
+                              new Tmap.Size(100,20),
+                              "<div style=\"padding-left: 10px; font-weight:bold; font-size:15px\">" + name + "</div>"
+                              ); 
+      popup.autoSize=true;
+      map.addPopup(popup);
+      popup.hide();
+      
+      marker.events.register("mouseover", popup, onMouseMarker);
+      marker.events.register("mouseout", popup, onMouseMarker);
+      marker.events.register("click", popup, onMouseMarker);
+       
+      function onMouseMarker (evt){
+          if(evt.type == "mouseover"){
+              this.show();
+          }else if(evt.type == "mouseout"){
+             this.hide();
+          }else if(evt.type == "click"){
+        	  addMarketList(name, lonlat);			// 클릭하면 리스트에 이름올리기 -> TODO.해당 위도 경도도 어디에저장해야된다.(누르면 해당 위치로 이동하게)
+           }
+      }
+   }
+   
+   function getMartLocs(){                        // 마트 정보 가져오기
+      var martLocsJson = null;
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function() {
+      if (xhttp.readyState == 4 && xhttp.status == 200) {
+         var martLocsJson = xhttp.responseText;
+         var martLocs = JSON.parse(martLocsJson);
+         for(var i=0; i<martLocs.row.length; i++){
+            addMarker(martLocs.row[i].M_NAME, martLocs.row[i].LNG, martLocs.row[i].LAT, 1);
+         }
+         }
+      };
+      xhttp.open("GET", "http://localhost:8080/MarketPrice/rest1/martlocs/mart", true);
+      xhttp.send(); 
+      
+   }
+   // #service 1
+   function getMarketLocs(){                     // 시장 정보 가져오기
+      var martLocsJson = null;
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function() {
+    	  console.log(xhttp.readyState)
+      if (xhttp.readyState == 4 && xhttp.status == 200) {
+         var martLocsJson = xhttp.responseText;
+         var martLocs = JSON.parse(martLocsJson);
+         for(var i=0; i<martLocs.row.length; i++){
+            addMarker(martLocs.row[i].M_NAME, martLocs.row[i].LNG, martLocs.row[i].LAT, 2);
+         }
+         }
+      };
+      xhttp.open("GET", "http://localhost:8080/MarketPrice/rest1/martlocs/market", true);
+      xhttp.send(); 
+      
+   }
+
+   function goSearchedMart(){				// 검색기능에서 작성한 시장/마트 위치 가져오기
+	   var textValue = document.getElementById("searchTextID").value;
+	   textValue.replace( /(\s*)/g, "");
+	   var searchedMartLocsJson = null;
+	      var xhttp = new XMLHttpRequest();
+	      xhttp.onreadystatechange = function() {
+			console.log(xhttp.readyState)
+			
+	    	 if (xhttp.readyState == 4 && xhttp.status == 200) {
+		         var searchedMartLocsJson = xhttp.responseText;
+		         var searchedMartLocs = JSON.parse(searchedMartLocsJson);
+		         console.log(searchedMartLocs.result)
+		        if(searchedMartLocs.result=="fail"){
+		        	alert("존재하지 않습니다.")
+		        }else{
+			        var lonlat = new Tmap.LonLat(searchedMartLocs.result.LNG, searchedMartLocs.result.LAT);
+		        	var pr_3857 = new Tmap.Projection("EPSG:3857");      
+		     		var pr_4326 = new Tmap.Projection("EPSG:4326");      
+		     		lonlat.transform(pr_4326, pr_3857)  
+		     		map.setCenter(lonlat, 14);
+			    }
+		     }
+	      };
+	      // url 바꾸기
+	      xhttp.open("GET", "http://localhost:8080/MarketPrice/rest1/martlocs/search/"+textValue, true);
+	      xhttp.send(); 
+   
+	}
+   
+   function goCurrentPosition(){			// 현재위치로 이동하는 함수
+		var lonlat = new Tmap.LonLat(127.079268, 37.541001);
+		var pr_3857 = new Tmap.Projection("EPSG:3857");      
+		var pr_4326 = new Tmap.Projection("EPSG:4326");      
+		lonlat.transform(pr_4326, pr_3857)  
+		map.setCenter(lonlat, 14);
+   }
+   
+   function addMarketList(name , lonlat)  		// 리스트에 선택된 시장/마트들 추가하기
+   {  
+      
+	   
+	   if(document.getElementById(lonlat.lat) == null){			// 한글은 id가 안되서 경도로 id지정 ㅠㅠ 으아앙아아s
+		   console.log(name);
+		   selectList.add(new MarketInfo(name, lonlat.lat, lonlat.lon));
+       		$("#select_market_list").append("<li id ="+lonlat.lat+" name="+name+" style='margin-left : 20px;margin-bottom:10px'>"+name+ "<a href='#' onclick='javascript:removeMarketList()' class='itemDelete' style='text-decoration:none'>"+"   X"+"</a></li>");
+       	   alert("추가되었습니다.");
+	   }
+	   else{
+		   alert("이미 추가되었습니다.");
+	   }
+	   for(var i=0; i<selectList.size(); i++){
+		   console.log(selectList.get(i));
+	   }
+   }
+   //삭제하기.
+   function removeMarketList(name)
+   {
+	  
+	   $('#select_market_list').on('click', '.itemDelete', function() {
+		    $(this).closest('li').remove();
+			//#select_market_list에 있는 li중의 클릭한 li의 name값 반환
+		    var id=$(this).closest('li').attr('name');
+		    for(var i=0; i<selectList.size(); i++){
+		    	if(selectList.get(i).name==id){
+					selectList.remove(i);
+					break;
+				}
+		    }		    
+		});
+	   
+	   alert("삭제 되었습니다.");
+	   
+   }   
+	  
+   // #service2 
+   function wrapGoPriceCompare(){		// goPriceCompare에서 수행하면 서비스가 하나만 실행되서 이렇게 했음
+	   console.log(comparePriceBox);
+	   document.getElementById("comparePriceBox").innerHTML = "";
+	   for(var i=0; i<=selectList.size()-1; i++){
+		   console.log(selectList.get(i));		
+		   goPriceCompare(selectList.get(i).name);
+	   }
+	   //가장 낮은 가격 테두리 입히기.
+	   for(var i=0;i<=selectList.size()-1;i++ ){
+		 
+	   }
+	   
+	   var offset = $("#second_section").offset();			// 비교하는 부분으로 스크롤 이동!
+       $('html, body').animate({scrollTop : offset.top}, 400);
+   }
+   // #service2 
+	function goPriceCompare(marketName){
+		
+		    marketName=marketName.replace(/\s/g,'');  //중간공백 없애기!. (공릉동 도깨비시장 해결)
+		    console.log(marketName);
+		    
+			var priceInfoJson = null;
+		      var xhttp = new XMLHttpRequest();
+		      xhttp.onreadystatechange = function() {
+		      if (xhttp.readyState == 4 && xhttp.status == 200) {
+		         var priceInfoJson = xhttp.responseText;
+		         var priceInfo = JSON.parse(priceInfoJson);
+		         //console.log(marketName)
+		         /* 
+		         *	여기서 해당 상품 가격 정보들 띄워주어야함, php로 리스트들을 동적으로 만드려고 테스팅 했으나 자바스크립트 변수를 php로 넘겨주는 데에서 문제가됨.
+		         *  어떻게 자바스크립트의 변수를 받긴 하였으나, 그것을 int로 변환하는 과정에서 오류가 났으며, 확인결과 이 문제는 해결할 수 없다고 함.
+		         *  따라서 자바스크립트로 리스트를 추가해주어야 하며, 많이 찾아보진 않았으나 몇몇 사람들은 스트링에 html태그를 세팅해주어서 보내주었고, 이를 따라할 것임
+		         */
+		         
+		         var resultText = "<h3>"+marketName+"</h3><ul style=padding-bottom:15px;>";
+		         for(var i=0; i<priceInfo.row.length; i++){			
+		           	
+					resultText += "<li><img src=image"+(i+1)+".png>"+priceInfo.row[i].A_NAME+"<br>"+priceInfo.row[i].A_UNIT+"<br>"+priceInfo.row[i].A_PRICE+"</li>";
+					
+		         }
+		         resultText += "</ul>"
+		         //console.log(resultText);
+		         $("#comparePriceBox").append(resultText);
+		         }
+		      };
+		      xhttp.open("GET", "http://localhost:8080/MarketPrice/rest2/markinfos/"+marketName, true);
+		      xhttp.send(); 
+		
+	}
+	
+ 
+   window.onload = function() {
+      initialize();
+      getMarketLocs();
+      getMartLocs();
+      
+   }
+   // function zoomToExtent(){
+   //     map.zoomToExtent(new Tmap.LonLat(
+   //     document.getElementById('xxx').value,document.getElementById('yyy').value));
+   // }
+</script>
+<style type="text/css">
+body {
+	padding: 30px;
+	background: #F5F5F5;
+}
+
+#first_section {
+	margin: 30px;
+	background: #FFFFF0;
+	padding-top: 20px;
+	padding-bottom: 30px;
+	padding-left: 20px;
+	padding-right: 20px;
+}
+
+#first_section_title {
+	background: #FFF8DC;
+}
+
+#second_section {
+	margin: 30px;
+	background: #FFFFF0;
+	padding-top: 20px;
+	padding-bottom: 30px;
+	padding-left: 20px;
+	padding-right: 20px;
+}
+
+#second_section_title {
+	background: #FFF8DC;
+}
+
+#main {
+	padding: 60px;
+	height: 540px;
+	overflow: hidden;
+}
+
+#map_div {
+	float: left;
+}
+
+#search_market_box {
+	margin: 10px;
+}
+
+#search_market_box input {
+	padding: 5px;
+	font-size: 12pt;
+}
+
+#search_market_box button {
+	padding: 5px;
+	font-size: 12pt;
+}
+
+#select_market_box {
+	width: 200px;
+	height: 400px;
+	border-width: 1px;
+	border-color: gray;
+	border-style: solid;
+	padding: 20px;
+	margin-left: 20px;
+	margin-right: 20px;
+	float: left;
+}
+
+#select_market_box p {
+	text-align: center;
+	font-weight: bolder;
+	font-size : 30px
+}
+
+#first_section_button {
+	margin-top: 20px;
+	margin-left: 20px;
+	margin-right: 20px;
+	float: left;
+}
+
+#first_section_button  button {
+	padding: 5px;
+	font-size: 12pt;
+}
+
+#wrapperPriceBox {
+	overflow: auto;
+	width: 100%;
+	height: 800px;
+	padding: 10px;
+}
+
+#comparePriceBox {
+	width: 2500px;
+	float: left;
+	padding-left: 60px;
+	padding-right: 60px;;
+}
+
+#comparePriceBox ul {
+	list-style: none;
+	display: block;
+	float: left;
+	width: 100%;
+	height: 100%;
+	padding: 0;
+	margin: 0;
+	text-align: left;
+}
+
+#comparePriceBox li {
+	display: block;
+	vertical-align: middle;
+	float: left;
+	padding: 0 10px;
+	width: 130px;
+	height: 100%;
+	font-size: 14px;
+	border: none !important;
+}
+</style>
+</head>
+
+<body>
+	<div id="first_section">
+		<h1 id="first_section_title">내 주변의 시장/마켓</h1>
+		<div id="main">
+			<div id="search_market_box">
+
+				<input id="searchTextID" type="text" name="searchText">
+				<button onclick="goSearchedMart()">검색</button>
+				<button style="margin-left: 15px" onclick="goCurrentPosition()">현재위치로
+					이동</button>
+			</div>
+			<div id="map_div"></div>
+			<div id="select_market_box">
+				<p>List</p>
+				<hr>
+				<ul id="select_market_list">
+
+				</ul>
+			</div>
+			<div id="first_section_button">
+
+				<button onclick="wrapGoPriceCompare()">가격 비교하기</button>
+			</div>
+		</div>
+	</div>
+
+	<div id="second_section">
+		<h1 id="second_section_title">비교하기</h1>
+		<div id="wrapperPriceBox">
+			<div id="comparePriceBox">
+				<ul id="comparePriceList">
+
+					<li><img src="image1.png" alt=" Portfolio"></li>
+					<li><img src="image2.png" alt=" Portfolio"></li>
+					<li><img src="image3.png" alt=" Portfolio"></li>
+					<li><img src="image4.png" alt=" Portfolio"></li>
+					<li><img src="image5.png" alt=" Portfolio"></li>
+					<li><img src="image6.png" alt=" Portfolio"></li>
+					<li><img src="image7.png" alt=" Portfolio"></li>
+					<li><img src="image8.png" alt=" Portfolio"></li>
+					<li><img src="image9.png" alt=" Portfolio"></li>
+					<li><img src="image10.png" alt=" Portfolio"></li>
+					<li><img src="image11.png" alt=" Portfolio"></li>
+					<li><img src="image12.png" alt=" Portfolio"></li>
+					<li><img src="image13.png" alt=" Portfolio"></li>
+					<li><img src="image13.png" alt=" Portfolio"></li>
+					<li><img src="image15.png" alt=" Portfolio"></li>
+					<li><img src="image13.png" alt=" Portfolio"></li>
+
+				</ul>
+
+			</div>
+		</div>
+	</div>
+	<div></div>
+</body>
+</html>

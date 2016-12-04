@@ -1,0 +1,33 @@
+.scroll-pagination {
+	position: absolute;
+	right: 10px;
+	top: 50%;
+	z-index: 5;
+	list-style: non
+	margin: 0;
+	padding: 0;
+}
+.scroll-pagination li a{
+	padding: 10px;
+	display: block;		  
+}
+.scroll-pagination li a:before{
+	content: '';
+	position: absolute;
+	width: 8px;
+	height: 8px;
+	background: rgba(67,67,67,0.85);
+	border-radius: 50%;
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+}
+.scroll-pagination li a.active:before{
+	content: '';
+	position: absolute;
+	width: 8px;
+	height: 8px;
+	background: rgba(255,255,255,0.85);
+	border-radius: 50%;
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+}
