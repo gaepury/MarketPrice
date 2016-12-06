@@ -63,7 +63,8 @@
 		this.lon = lon;
 	}	
 	//==========================================================	
-		
+   var c_lat=37.541001 //현재 위도
+   var c_lon=127.079268 //현재 경도
    
    var map = null;
    var selectList = new ArrayList();
@@ -79,7 +80,7 @@
       map.addControls([
           new Tmap.Control.KeyboardDefaults(),
       ]);
-      var lonlat = new Tmap.LonLat(127.079268, 37.541001);
+      var lonlat = new Tmap.LonLat(c_lon, c_lat);
       var pr_3857 = new Tmap.Projection("EPSG:3857");      
       var pr_4326 = new Tmap.Projection("EPSG:4326");      
       lonlat.transform(pr_4326, pr_3857)  
@@ -199,7 +200,7 @@
 	}
    
    function goCurrentPosition(){			// 현재위치로 이동하는 함수
-		var lonlat = new Tmap.LonLat(127.079268, 37.541001); //경도 ,위도
+		var lonlat = new Tmap.LonLat(c_lon, c_lat); //경도 ,위도
 		var pr_3857 = new Tmap.Projection("EPSG:3857");      
 		var pr_4326 = new Tmap.Projection("EPSG:4326");      
 		lonlat.transform(pr_4326, pr_3857)  
@@ -303,7 +304,7 @@
 		     }
 	      }
 	     };
-	      xhttp.open("GET", "http://localhost:8080/MarketPrice/rest3/dir/"+127.079268+"-"+37.541001+"/"+name, true);
+	      xhttp.open("GET", "http://localhost:8080/MarketPrice/rest3/dir/"+c_lon+"-"+c_lat+"/"+name, true);
 	      xhttp.send(); 
 	}
  
@@ -326,7 +327,7 @@ body {
 
 #first_section {
 	margin: 30px;
-	background: #FFFFF0;
+	background: #FFFFF5;
 	padding-top: 20px;
 	padding-bottom: 30px;
 	padding-left: 20px;
@@ -342,7 +343,7 @@ body {
 
 #second_section {
 	margin: 30px;
-	background: #FFFFF0;
+	background: #FFFFF5;
 	padding-top: 20px;
 	padding-bottom: 30px;
 	padding-left: 20px;
