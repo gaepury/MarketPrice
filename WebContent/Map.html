@@ -64,7 +64,7 @@
 	}	
 	//==========================================================	
 		
-		
+   
    var map = null;
    var selectList = new ArrayList();
    var index=0;
@@ -250,7 +250,6 @@
 	   for(var i=0; i<=selectList.size()-1; i++){
 		   console.log(selectList.get(i));		
 		   var price = goPriceCompare(selectList.get(i).name);
-		   console.log(price);
 	   }
 	   //가장 낮은 가격 테두리 입히기.
 	   var offset = $("#second_section").offset();			// 비교하는 부분으로 스크롤 이동!
@@ -258,28 +257,24 @@
    }
    // #service2 
 	function goPriceCompare(marketName){
-		
+			
 		    marketName=marketName.replace(/\s/g,'');  //중간공백 없애기!. (공릉동 도깨비시장 해결)
 		    console.log(marketName);
-		    
+		    var name=marketName;
 			var priceInfoJson = null;
 		      var xhttp = new XMLHttpRequest();
 		      xhttp.onreadystatechange = function() {
 		      if (xhttp.readyState == 4 && xhttp.status == 200) {
 		         var priceInfoJson = xhttp.responseText;
 		         var priceInfo = JSON.parse(priceInfoJson);
-		         //console.log(marketName)
 		         /* 
 		         *	여기서 해당 상품 가격 정보들 띄워주어야함, php로 리스트들을 동적으로 만드려고 테스팅 했으나 자바스크립트 변수를 php로 넘겨주는 데에서 문제가됨.
 		         *  어떻게 자바스크립트의 변수를 받긴 하였으나, 그것을 int로 변환하는 과정에서 오류가 났으며, 확인결과 이 문제는 해결할 수 없다고 함.
 		         *  따라서 자바스크립트로 리스트를 추가해주어야 하며, 많이 찾아보진 않았으나 몇몇 사람들은 스트링에 html태그를 세팅해주어서 보내주었고, 이를 따라할 것임
 		         */
-		         
-		         var resultText = "<div id='mart_info' ><h3 style='margin-bottom:10px' >"+marketName+"</h3> <ul style='padding-bottom:15px'>";
+		         var resultText = "<h3 style='margin-bottom:5px' >"+marketName+"</h3><image id="+marketName+" style='cursor:pointer' src='dir.png' onclick="+"javascript:dirSearch(this)"+"/><ul style='padding-bottom:15px'>";
 		         for(var i=0; i<priceInfo.row.length; i++){			
-					           	
 					resultText += "<li style='font-weight:bold'><img src='image"+(i+1)+".png'>"+priceInfo.row[i].A_NAME+"<br>"+priceInfo.row[i].A_UNIT+"<br>"+priceInfo.row[i].A_PRICE+"원 </li>";
-							
 		         }
 		         resultText += "</ul>"
 		         //console.log(resultText);
@@ -290,7 +285,27 @@
 		      xhttp.send(); 
 		
 	}
-	
+	function dirSearch(marketName){
+		name=marketName.getAttribute('id');
+		console.log(name);
+		var dirJson = null;
+	     var xhttp = new XMLHttpRequest();
+	      xhttp.onreadystatechange = function() {
+	      if (xhttp.readyState == 4 && xhttp.status == 200) {
+	    	  
+	    	 var dirJson = xhttp.responseText;
+	         var dir = JSON.parse(dirJson);
+	         console.log(dir);
+	         if(dir.result=="fail"){
+		         alert("실패.")
+		     }else{
+		    	 window.open(dir.result, '_blank'); //이것만 해결하면 된다.
+		     }
+	      }
+	     };
+	      xhttp.open("GET", "http://localhost:8080/MarketPrice/rest3/dir/"+127.079268+"-"+37.541001+"/"+name, true);
+	      xhttp.send(); 
+	}
  
    window.onload = function() {
       initialize();
@@ -457,7 +472,7 @@ body {
 	</div>
 
 	<div id="second_section" ">
-		<h1 id='second_section_title' style='color:#fff ; padding:15px ;margin-bottom:30px'>비교하기</h1>
+		<h1 id='second_section_title' style='color:#fff ; padding:15px ;margin-bottom:15px'>비교하기</h1>
 		<div id="wrapperPriceBox">
 			<div id="comparePriceBox">
 				<ul id="comparePriceList">
