@@ -249,12 +249,11 @@
 	   document.getElementById("comparePriceBox").innerHTML = "";
 	   for(var i=0; i<=selectList.size()-1; i++){
 		   console.log(selectList.get(i));		
-		   goPriceCompare(selectList.get(i).name);
+		   var price = goPriceCompare(selectList.get(i).name);
+		   console.log(price);
 	   }
 	   //가장 낮은 가격 테두리 입히기.
-	   for(var i=0;i<=selectList.size()-1;i++ ){
-		 
-	   }
+	   
 	   
 	   var offset = $("#second_section").offset();			// 비교하는 부분으로 스크롤 이동!
        $('html, body').animate({scrollTop : offset.top}, 400);
@@ -278,11 +277,11 @@
 		         *  따라서 자바스크립트로 리스트를 추가해주어야 하며, 많이 찾아보진 않았으나 몇몇 사람들은 스트링에 html태그를 세팅해주어서 보내주었고, 이를 따라할 것임
 		         */
 		         
-		         var resultText = "<h3>"+marketName+"</h3><ul style=padding-bottom:15px;>";
+		         var resultText = "<h3 >"+marketName+"</h3><ul style='padding-bottom:15px'>";
 		         for(var i=0; i<priceInfo.row.length; i++){			
-		           	
-					resultText += "<li><img src=image"+(i+1)+".png>"+priceInfo.row[i].A_NAME+"<br>"+priceInfo.row[i].A_UNIT+"<br>"+priceInfo.row[i].A_PRICE+"</li>";
-					
+					           	
+					resultText += "<li style='font-weight:bold'><img src='image"+(i+1)+".png'>"+priceInfo.row[i].A_NAME+"<br>"+priceInfo.row[i].A_UNIT+"<br>"+priceInfo.row[i].A_PRICE+"원 </li>";
+							
 		         }
 		         resultText += "</ul>"
 		         //console.log(resultText);
@@ -322,7 +321,10 @@ body {
 }
 
 #first_section_title {
-	background: #FFF8DC;
+	
+	font-family: Arial;
+	font-weight:bold;
+	background: #52C1B1;
 }
 
 #second_section {
@@ -335,7 +337,7 @@ body {
 }
 
 #second_section_title {
-	background: #FFF8DC;
+	background: #52C1B1;
 }
 
 #main {
@@ -432,7 +434,7 @@ body {
 
 <body>
 	<div id="first_section">
-		<h1 id="first_section_title">내 주변의 시장/마켓</h1>
+		<h1 id="first_section_title" style="color:#fff ; padding:15px">내 주변의 시장/마켓</h1>
 		<div id="main">
 			<div id="search_market_box">
 
@@ -456,8 +458,8 @@ body {
 		</div>
 	</div>
 
-	<div id="second_section">
-		<h1 id="second_section_title">비교하기</h1>
+	<div id="second_section" ">
+		<h1 id='second_section_title' style='color:#fff ; padding:15px ;margin-bottom:30px'>비교하기</h1>
 		<div id="wrapperPriceBox">
 			<div id="comparePriceBox">
 				<ul id="comparePriceList">
